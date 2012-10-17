@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8" />
+
+  <!-- Set the viewport width to device width for mobile -->
+  <meta name="viewport" content="width=device-width" />
+
+  <title>Am I Unbreakable?</title>
+
+  <!-- Included CSS Files (Compressed) -->
+  <link rel="stylesheet" href="/static/stylesheets/foundation.min.css">
+  <link rel="stylesheet" href="/static/stylesheets/app.css">
+
+  <script src="/static/javascripts/modernizr.foundation.js"></script>
+
+  <!-- IE Fix for HTML5 Tags -->
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+</head>
+<body>
+    <div class="row">
+        <br />
+        <br />
+    </div>
+    <div class="row">
+        <div class="six columns">
+            <img src="http://www.blogcdn.com/blog.moviefone.com/media/2010/09/unbreakable.jpg" width="450" height="300" />
+        </div>
+        <div class="six columns">
+            <h1>Am I unbreakable?</h1>
+            <h3><a href="https://api.23andme.com/authorize?redirect_uri={{.redirect_uri}}&response_type=code&client_id={{.client_id}}&scope={{.scopes}}" class="button large">Find out.</a></h3>
+            <p>A recent <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745&imageURI=info%3Adoi%2F10.1371%2Fjournal.pgen.1002745.t001">PLOS Genetics</a> paper found a gene for bone mineral density, cortical bone thickness, bone strength, and osteoporotic fracture risk.</p>
+            <p>Maybe you're built like Superman, and maybe you're Mr. Glass. There's only one way to find out (without running into a brick wall).<br /> <a href="https://23andme.com">Not genotyped?</a></p>
+        </div>
+    </div>
+    <!-- Included JS Files (Compressed) -->
+    <script src="/static/javascripts/jquery.js"></script>
+    <script src="/static/javascripts/foundation.min.js"></script>
+
+    <!-- Initialize JS Plugins -->
+    <script src="/static/javascripts/app.js"></script>
+</body>
+</html>
