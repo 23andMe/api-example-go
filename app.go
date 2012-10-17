@@ -4,31 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/sessions"
+	"github.com/kless/goconfig"
 	"html/template"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
+    "strings"
 )
-
-// Your API credentials and server info
-var client_id = os.Getenv("CLIENT_ID")
-var client_secret = os.Getenv("CLIENT_SECRET")
-var api_uri = "https://api.23andme.com"
-var redirect_uri = "http://localhost:5000/receive_code/"
-var rsid = "i3000001"
-var scopes = "basic names " + rsid
-
-// Your session credentials
-var cookie_secret = os.Getenv("COOKIE_SECRET")
-var static_path = os.Getenv("STATIC_PATH")
-var session_name = "api"
-var session_access_token_key = "api_access_token"
-var store = sessions.NewCookieStore([]byte(cookie_secret))
-
-// Misc
-var port = os.Getenv("PORT")
-var templates = template.Must(template.ParseFiles("templates/index.dtml", "templates/result.dtml"))
 
 // To parse the JSON responses
 type TokenResponse struct {
@@ -62,40 +44,67 @@ type NamesResponse struct {
 	Profiles  []ProfileNameResponse `json:"profiles"`
 }
 
+func buildConfig() map[string]interface{} {
+	c, _ := config.ReadDefault("config.cfg")
+	configs := make(map[string]interface{})
+	section := "DEFAULT"
+	/*cortical_thickness_snps := []string{"rs9525638", "rs2707466"}*/
+	/*forearm_bmd_snps := []string{"rs2536189", "rs2908004", "rs2707466"}*/
+	/*forearm_fracture_snps := []string{"rs7776725", "rs2908004", "rs2707466"}*/
+    scopes := []string{"rs9525638", "rs2908004", "rs2707466", "rs7776725", "rs2908004", "basic", "names"}
+    configs["scope"] = strings.Join(scopes, " ")
+	// Your API credentials and server info
+	config_string_keys := []string{"client_id", "client_secret", "api_uri", "redirect_uri",
+		"cookie_secret", "static_path", "session_name", "session_access_token_key"}
+	config_int_keys := []string{"port"}
+
+	var err error
+	for _, value := range config_string_keys {
+		configs[value], err = c.String(section, value)
+		if err != nil {
+			log.Fatal("You must define %s in your config file", value)
+		}
+	}
+	for _, value := range config_int_keys {
+		configs[value], err = c.Int(section, value)
+		if err != nil {
+			log.Fatal("You must define %s in your config file", value)
+		}
+	}
+    return configs
+}
+
 func main() {
-	if client_id == "" {
-		log.Fatal("CLIENT_ID not defined in your environment")
-	}
-	if client_secret == "" {
-		log.Fatal("CLIENT_SECRET not defined in your environment")
-	}
-	if port == "" {
-		log.Fatal("PORT not defined in your environment")
-	}
-	if cookie_secret == "" {
-		log.Fatal("COOKIE_SECRET not defined in your environment")
-	}
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(static_path))))
-	http.HandleFunc("/receive_code/", receiveCode)
-	http.HandleFunc("/", index)
-	err := http.ListenAndServe(":"+port, nil)
+	config := buildConfig()
+    store := sessions.NewCookieStore([]byte(config["cookie_secret"].(string)))
+
+	templates := template.Must(template.ParseFiles("templates/index.dtml", "templates/result.dtml"))
+
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config["static_path"].(string)))))
+	http.HandleFunc("/receive_code/", func(w http.ResponseWriter, req *http.Request) {
+        receiveCode(w, req, config, store, templates)
+    })
+	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+        index(w, req, config, store, templates)
+    })
+	err := http.ListenAndServe(fmt.Sprintf(":%d", config["port"].(int)), nil)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
 
-func receiveCode(w http.ResponseWriter, req *http.Request) {
-	session, _ := store.Get(req, session_name)
+func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]interface{}, store *sessions.CookieStore, templates *template.Template) {
+	session, _ := store.Get(req, config["session_name"].(string))
 	context, _ := url.ParseQuery(req.URL.RawQuery)
 	if code, ok := context["code"]; ok {
 		auth_code := string(code[0])
-		resp, _ := http.PostForm(api_uri+"/token/",
-			url.Values{"client_id": {client_id},
-				"client_secret": {client_secret},
+		resp, _ := http.PostForm(config["api_uri"].(string)+"/token/",
+			url.Values{"client_id": {config["client_id"].(string)},
+				"client_secret": {config["client_secret"].(string)},
 				"grant_type":    {"authorization_code"},
 				"code":          {auth_code},
-				"redirect_uri":  {redirect_uri},
-				"scope":         {scopes},
+				"redirect_uri":  {config["redirect_uri"].(string)},
+				"scope":         {config["scope"].(string)},
 			})
 		defer resp.Body.Close()
 		if resp.StatusCode == 200 {
@@ -105,10 +114,10 @@ func receiveCode(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Printf(err.Error())
 			} else {
-				session.Values[session_access_token_key] = t_res.AccessToken
+				session.Values[config["session_access_token_key"].(string)] = t_res.AccessToken
 				session.Save(req, w)
 				log.Printf("token is %s", t_res.AccessToken)
-				http.Redirect(w, req, "/", 302)
+				http.Redirect(w, req, "/", 303)
 			}
 		}
 	} else if error_type, ok := context["error"]; ok {
@@ -118,19 +127,20 @@ func receiveCode(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func index(w http.ResponseWriter, req *http.Request) {
-	session, _ := store.Get(req, session_name)
-	access_token, ok := session.Values[session_access_token_key].(string)
+func index(w http.ResponseWriter, req *http.Request, config map[string]interface{}, store *sessions.CookieStore, templates *template.Template) {
+	session, _ := store.Get(req, config["session_name"].(string))
+	access_token, ok := session.Values[config["session_access_token_key"].(string)].(string)
 	if !ok {
 		context := map[string]string{
 			"path":         req.URL.Path,
-			"client_id":    client_id,
-			"scopes":       scopes,
-			"redirect_uri": redirect_uri,
+			"client_id":    config["client_id"].(string),
+			"scope":       config["scope"].(string),
+			"redirect_uri": config["redirect_uri"].(string),
 		}
 		_ = templates.ExecuteTemplate(w, "index.dtml", context)
 	} else {
 		client := &http.Client{}
+        api_uri := config["api_uri"].(string)
 
 		req, err := http.NewRequest("GET", api_uri+"/1/user/", nil)
 		req.Header.Add("Authorization", "Bearer "+access_token)

@@ -30,14 +30,14 @@
         <br />
         <br />
     </div>
-    <div class="row">
+    <div class="row" id="main">
         <div class="six columns">
             <img src="http://www.blogcdn.com/blog.moviefone.com/media/2010/09/unbreakable.jpg" width="450" height="300" />
         </div>
         <div class="six columns">
             <h1>Am I unbreakable?</h1>
-            <h3><a href="https://api.23andme.com/authorize?redirect_uri={{.redirect_uri}}&response_type=code&client_id={{.client_id}}&scope={{.scopes}}" class="button large">Find out.</a></h3>
-            <p>A recent <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745&imageURI=info%3Adoi%2F10.1371%2Fjournal.pgen.1002745.t001">PLOS Genetics</a> paper found a gene for bone mineral density, cortical bone thickness, bone strength, and osteoporotic fracture risk.</p>
+            <h3><a href="https://api.23andme.com/authorize?redirect_uri={{.redirect_uri}}&response_type=code&client_id={{.client_id}}&scope={{.scope}}" class="button large">Find out.</a></h3>
+            <p>A recent <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">PLOS Genetics</a> paper found a gene for bone mineral density, cortical bone thickness, bone strength, and osteoporotic fracture risk.</p>
             <p>Maybe you're built like Superman, and maybe you're Mr. Glass. There's only one way to find out (without running into a brick wall).<br /> <a href="https://23andme.com">Not genotyped?</a></p>
         </div>
     </div>
