@@ -1,1 +1,1 @@
-web: example-house-lupus
+web: api-example-bones
