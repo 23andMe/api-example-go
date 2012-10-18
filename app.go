@@ -6,54 +6,19 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/kless/goconfig"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-// To parse the JSON responses
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 	Scope        string `json:"scope"`
-}
-
-type UserProfileResponse struct {
-	Id        string `json:"id"`
-	Genotyped bool   `json:"genotyped"`
-}
-
-type UserResponse struct {
-	Id       string                `json:"id"`
-	Profiles []UserProfileResponse `json:"profiles"`
-}
-
-type ProfileNameResponse struct {
-	Id        string `json:"id"`
-	LastName  string `json:"last_name"`
-	FirstName string `json:"first_name"`
-}
-
-type NamesResponse struct {
-	Id        string                `json:"id"`
-	LastName  string                `json:"last_name"`
-	FirstName string                `json:"first_name"`
-	Profiles  []ProfileNameResponse `json:"profiles"`
-}
-
-type ProfileGenotypeResponse struct {
-	Id        string `json:"id"`
-	rs9525638 string
-	rs2908004 string
-	rs2707466 string
-	rs7776725 string
-}
-
-type GenotypeResponse struct {
-	Profiles []ProfileGenotypeResponse
 }
 
 func buildConfig() map[string]string {
@@ -68,7 +33,7 @@ func buildConfig() map[string]string {
 	scopes := make([]string, len(genotype_scopes)+len(regular_scopes))
 	copy(scopes, regular_scopes)
 	copy(scopes[len(regular_scopes):], genotype_scopes)
-	configs["genotype_scopes"] = strings.Join(genotype_scopes, " ")
+	configs["genotype_scopes"] = strings.Join(genotype_scopes, "%20")
 	configs["scope"] = strings.Join(scopes, " ")
 	// Your API credentials and server info
 	config_keys := []string{"client_id", "client_secret", "api_uri", "redirect_uri",
@@ -136,6 +101,20 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 	}
 }
 
+func getJSONResponse(http_method string, url string, access_token string) interface{} {
+	var data interface{}
+	client := &http.Client{}
+	req, err := http.NewRequest(http_method, url, nil)
+	req.Header.Add("Authorization", "Bearer "+access_token)
+	resp, err := client.Do(req)
+	body, err := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		log.Printf(err.Error())
+	}
+	return data
+}
+
 func index(w http.ResponseWriter, req *http.Request, config map[string]string, store *sessions.CookieStore, templates *template.Template) {
 	session, _ := store.Get(req, config["session_name"])
 	access_token, ok := session.Values[config["session_access_token_key"]].(string)
@@ -148,34 +127,13 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		}
 		_ = templates.ExecuteTemplate(w, "index.dtml", context)
 	} else {
-		client := &http.Client{}
 		api_uri := config["api_uri"]
-
-		req, err := http.NewRequest("GET", api_uri+"/1/user/", nil)
-		req.Header.Add("Authorization", "Bearer "+access_token)
-		resp, err := client.Do(req)
-		var u_res UserResponse
-		dec := json.NewDecoder(resp.Body)
-		err = dec.Decode(&u_res)
-
-		req, err = http.NewRequest("GET", api_uri+"/1/names/", nil)
-		req.Header.Add("Authorization", "Bearer "+access_token)
-		resp, err = client.Do(req)
-		var n_res NamesResponse
-		dec = json.NewDecoder(resp.Body)
-		err = dec.Decode(&n_res)
-
-		req, err = http.NewRequest("GET", api_uri+"/1/genotype/?locations="+config["genotype_scopes"], nil)
-		req.Header.Add("Authorization", "Bearer "+access_token)
-		resp, err = client.Do(req)
-		var g_res GenotypeResponse
-		dec = json.NewDecoder(resp.Body)
-		err = dec.Decode(&g_res)
-
-		if err != nil {
-			log.Printf(err.Error())
-		} else {
-		}
-		err = templates.ExecuteTemplate(w, "result.dtml", nil)
+		user := getJSONResponse("GET", api_uri+"/1/user/", access_token)
+		names := getJSONResponse("GET", api_uri+"/1/names/", access_token)
+		genotypes := getJSONResponse("GET", api_uri+"/1/genotype/?locations="+config["genotype_scopes"], access_token)
+		log.Println(genotypes)
+		log.Println(user)
+		log.Println(names)
+		_ = templates.ExecuteTemplate(w, "result.dtml", nil)
 	}
 }
