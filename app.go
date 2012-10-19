@@ -21,13 +21,36 @@ type TokenResponse struct {
 	Scope        string `json:"scope"`
 }
 
-func buildConfig() map[string]string {
+type Name struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Id        string `json:"id"`
+}
+
+type NamesResponse struct {
+	Profiles []Name `json:"profiles"`
+}
+
+type Genome struct {
+	Rs9525638 string `json:"rs9525638"`
+	Rs2908004 string `json:"rs2908004"`
+	Rs2707466 string `json:"rs2707466"`
+	Rs7776725 string `json:"rs7776725"`
+	Id        string `json:"id"`
+}
+
+func computeBoneStrength(g Genome) (strength int) {
+    cortical_thickness_weakness := strings.Count(g.Rs9525638, "T") + strings.Count(g.Rs2707466, "C")
+    forearm_bone_mineral_density_weakness := strings.Count(g.Rs2908004, "G") + strings.Count(g.Rs2707466, "C")
+    forearm_fracture_risk := strings.Count(g.Rs7776725, "C") + strings.Count(g.Rs2908004, "G") + strings.Count(g.Rs2707466, "C")
+    strength = 14 - cortical_thickness_weakness - forearm_bone_mineral_density_weakness - forearm_fracture_risk
+    return
+}
+
+func buildConfig() (configs map[string]string) {
+	configs = make(map[string]string)
 	c, _ := config.ReadDefault("config.cfg")
-	configs := make(map[string]string)
 	section := "DEFAULT"
-	/*cortical_thickness_snps := []string{"rs9525638", "rs2707466"}*/
-	/*forearm_bmd_snps := []string{"rs2536189", "rs2908004", "rs2707466"}*/
-	/*forearm_fracture_snps := []string{"rs7776725", "rs2908004", "rs2707466"}*/
 	genotype_scopes := []string{"rs9525638", "rs2908004", "rs2707466", "rs7776725"}
 	regular_scopes := []string{"basic", "names"}
 	scopes := make([]string, len(genotype_scopes)+len(regular_scopes))
@@ -37,8 +60,7 @@ func buildConfig() map[string]string {
 	configs["scope"] = strings.Join(scopes, " ")
 	// Your API credentials and server info
 	config_keys := []string{"client_id", "client_secret", "api_uri", "redirect_uri",
-		"cookie_secret", "static_path", "session_name", "session_access_token_key",
-		"port"}
+		"cookie_secret", "static_path", "session_name", "session_access_token_key", "port"}
 
 	var err error
 	for _, value := range config_keys {
@@ -47,7 +69,27 @@ func buildConfig() map[string]string {
 			log.Fatal("You must define %s in your config file", value)
 		}
 	}
-	return configs
+	return
+}
+
+func JSONResponse(http_method string, url string, access_token string) (data []byte, status_code int) {
+	client := &http.Client{}
+	req, err := http.NewRequest(http_method, url, nil)
+	req.Header.Add("Authorization", "Bearer "+access_token)
+	resp, err := client.Do(req)
+	data, err = ioutil.ReadAll(resp.Body)
+	status_code = resp.StatusCode
+	if err != nil {
+		log.Printf(err.Error())
+	}
+	return
+}
+
+func namesByProfile(names NamesResponse) (names_by_profile map[string]string) {
+	for _, name := range names.Profiles {
+		names_by_profile[name.Id] = fmt.Sprintf("%s %s", name.FirstName, name.LastName)
+	}
+	return
 }
 
 func main() {
@@ -101,23 +143,9 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 	}
 }
 
-func getJSONResponse(http_method string, url string, access_token string) interface{} {
-	var data interface{}
-	client := &http.Client{}
-	req, err := http.NewRequest(http_method, url, nil)
-	req.Header.Add("Authorization", "Bearer "+access_token)
-	resp, err := client.Do(req)
-	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		log.Printf(err.Error())
-	}
-	return data
-}
-
 func index(w http.ResponseWriter, req *http.Request, config map[string]string, store *sessions.CookieStore, templates *template.Template) {
 	session, _ := store.Get(req, config["session_name"])
-	access_token, ok := session.Values[config["session_access_token_key"]].(string)
+	token, ok := session.Values[config["session_access_token_key"]]
 	if !ok {
 		context := map[string]string{
 			"path":         req.URL.Path,
@@ -127,13 +155,24 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		}
 		_ = templates.ExecuteTemplate(w, "index.dtml", context)
 	} else {
+		access_token, _ := token.(string)
 		api_uri := config["api_uri"]
-		user := getJSONResponse("GET", api_uri+"/1/user/", access_token)
-		names := getJSONResponse("GET", api_uri+"/1/names/", access_token)
-		genotypes := getJSONResponse("GET", api_uri+"/1/genotype/?locations="+config["genotype_scopes"], access_token)
-		log.Println(genotypes)
-		log.Println(user)
-		log.Println(names)
+		data, status := JSONResponse("GET", api_uri+"/1/names/", access_token)
+		if status != 200 {
+			// Probably, the auth code expired. Go back home and re-authenticate.
+			delete(session.Values, config["session_access_token_key"])
+			session.Save(req, w)
+			http.Redirect(w, req, "/", 303)
+		}
+		var names NamesResponse
+		var genotypes []Genome
+		err := json.Unmarshal(data, &names)
+		data, status = JSONResponse("GET", api_uri+"/1/genotype/?locations="+config["genotype_scopes"], access_token)
+		err = json.Unmarshal(data, &genotypes)
+		if err != nil {
+			log.Printf(err.Error())
+		}
+		/*names_by_profile := namesByProfile(names)*/
 		_ = templates.ExecuteTemplate(w, "result.dtml", nil)
 	}
 }
