@@ -1,1 +1,1 @@
-web: ./api-example-bones
+web: api-example-bones
