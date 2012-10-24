@@ -42,11 +42,11 @@ type Genome struct {
 const MaximumBoneStrength = 14
 
 type BoneStrength struct {
-	Score               int
-	CorticalStrength    int
-	ForearmBMD  int
+	Score            int
+	CorticalStrength int
+	ForearmBMD       int
 	LowerForearmRisk int
-	Description         string
+	Description      string
 }
 
 type BoneStrengthProfile struct {
