@@ -61,7 +61,7 @@ func descriptionForStrength(strength int) string {
 	case strength < 8:
 		return "average"
 	case strength < 11:
-		return "strong"
+		return "high"
 	}
 	return "superhuman"
 }
