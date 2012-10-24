@@ -127,10 +127,11 @@ func main() {
 	config := buildConfig()
 	store := sessions.NewCookieStore([]byte(config["COOKIE_SECRET"]))
 
-	templates := template.Must(template.ParseFiles("templates/_base.dtml", "templates/index.dtml", "templates/result.dtml"))
+	templates := template.Must(template.ParseFiles("public/templates/_base.dtml", "public/templates/index.dtml", "public/templates/result.dtml"))
 
-    static_root, _ := os.Getwd()
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(static_root+"static/"))))
+	root, _ := os.Getwd()
+	log.Println(root)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(root+"/public/static/"))))
 	http.HandleFunc("/receive_code/", func(w http.ResponseWriter, req *http.Request) {
 		receiveCode(w, req, config, store, templates)
 	})

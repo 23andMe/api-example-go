@@ -1,0 +1,53 @@
+{{ define "result" }}
+{{ template "_header" }}
+<div class="row">
+    <br />
+    <br />
+</div>
+<div class="row" id="main">
+    <div class="twelve columns">
+        {{ range . }}
+        <div class="row">
+            <div class="twelve columns centered genetics">
+                All results from SNPs rs9525638, rs2908004, rs2707466, and rs7776725 on genes <i>WNT16</i> and <i>FAM3C</i>. Check out <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">the PLoS paper</a>.
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+                <span class="title">
+                    <span class="name">{{ .Name.FirstName }} {{ .Name.LastName }}</span>
+                </span>
+                <div class="strength">
+                    <span class="score">{{ .BoneStrength.Score }}</span><span class="maximum">/14</span>
+                    <br />
+                    <span class="description">
+                        <span class="mine {{ .BoneStrength.Description }}">
+                            {{ .BoneStrength.Description }}
+                        </span>
+                        Bone Strength
+                    </span>
+                </div>
+                <div class="breakdown">
+                    <br />
+                    <table>
+                        <tr>
+                            <td>Cortical Strength</td>
+                            <td><span class="num">{{.BoneStrength.CorticalStrength}}</span><span class="denom">/4</span></td>
+                        </tr>
+                        <tr>
+                            <td>Forearm Bone Mineral Density</td>
+                            <td><span class="num">{{.BoneStrength.ForearmBMD}}</span><span class="denom">/4</span></td>
+                        </tr>
+                        <tr>
+                            <td>Decreased Forearm Fracture Risk</td>
+                            <td><span class="num">{{.BoneStrength.LowerForearmRisk}}</span><span class="denom">/6</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ template "_footer" }}
+{{ end }}
