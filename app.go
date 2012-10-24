@@ -89,7 +89,7 @@ func buildConfig() (configs map[string]string) {
 	configs["scope"] = strings.Join(scopes, " ")
 	// Your API credentials and server info
 	config_keys := []string{"CLIENT_ID", "CLIENT_SECRET", "REDIRECT_URI",
-		"COOKIE_SECRET", "STATIC_PATH", "SESSION_NAME", "SESSION_ACCESS_TOKEN_KEY", "PORT"}
+		"COOKIE_SECRET", "SESSION_NAME", "SESSION_ACCESS_TOKEN_KEY", "PORT"}
 
 	var environment_result string
 	for _, value := range config_keys {
@@ -129,7 +129,8 @@ func main() {
 
 	templates := template.Must(template.ParseFiles("templates/_base.dtml", "templates/index.dtml", "templates/result.dtml"))
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config["STATIC_PATH"]))))
+    static_root, _ := os.Getwd()
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(static_root+"static/"))))
 	http.HandleFunc("/receive_code/", func(w http.ResponseWriter, req *http.Request) {
 		receiveCode(w, req, config, store, templates)
 	})
