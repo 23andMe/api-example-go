@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/sessions"
-	"github.com/kless/goconfig"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -39,7 +39,10 @@ type Genome struct {
 	Id        string `json:"id"`
 }
 
-const MaximumBoneStrength = 14
+const (
+	MAXIMUM_BONE_STRENGTH = 14
+	API_URI               = "https://api.23andme.com"
+)
 
 type BoneStrength struct {
 	Score            int
@@ -77,8 +80,6 @@ func computeBoneStrength(g Genome) (strength BoneStrength) {
 
 func buildConfig() (configs map[string]string) {
 	configs = make(map[string]string)
-	c, _ := config.ReadDefault("config.cfg")
-	section := "DEFAULT"
 	genotype_scopes := []string{"rs9525638", "rs2908004", "rs2707466", "rs7776725"}
 	regular_scopes := []string{"basic", "names"}
 	scopes := make([]string, len(genotype_scopes)+len(regular_scopes))
@@ -87,15 +88,16 @@ func buildConfig() (configs map[string]string) {
 	configs["genotype_scopes"] = strings.Join(genotype_scopes, "%20")
 	configs["scope"] = strings.Join(scopes, " ")
 	// Your API credentials and server info
-	config_keys := []string{"client_id", "client_secret", "api_uri", "redirect_uri",
+	config_keys := []string{"client_id", "client_secret", "redirect_uri",
 		"cookie_secret", "static_path", "session_name", "session_access_token_key", "port"}
 
-	var err error
+	var environment_result string
 	for _, value := range config_keys {
-		configs[value], err = c.String(section, value)
-		if err != nil {
-			log.Fatal("You must define %s in your config file", value)
+		environment_result = os.Getenv(value)
+		if environment_result == "" {
+			log.Fatalf("You must define %s in your environment", value)
 		}
+		configs[value] = environment_result
 	}
 	return
 }
@@ -145,7 +147,7 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 	context, _ := url.ParseQuery(req.URL.RawQuery)
 	if code, ok := context["code"]; ok {
 		auth_code := string(code[0])
-		resp, _ := http.PostForm(config["api_uri"]+"/token/",
+		resp, _ := http.PostForm(API_URI+"/token/",
 			url.Values{"client_id": {config["client_id"]},
 				"client_secret": {config["client_secret"]},
 				"grant_type":    {"authorization_code"},
@@ -184,8 +186,7 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		_ = templates.ExecuteTemplate(w, "index", context)
 	} else {
 		access_token, _ := token.(string)
-		api_uri := config["api_uri"]
-		data, status := JSONResponse("GET", api_uri+"/1/names/", access_token)
+		data, status := JSONResponse("GET", API_URI+"/1/names/", access_token)
 		if status != 200 {
 			// Probably, the auth code expired. Go back home and re-authenticate.
 			delete(session.Values, config["session_access_token_key"])
@@ -195,7 +196,7 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		var names NamesResponse
 		var genotypes []Genome
 		err := json.Unmarshal(data, &names)
-		data, status = JSONResponse("GET", api_uri+"/1/genotype/?locations="+config["genotype_scopes"], access_token)
+		data, status = JSONResponse("GET", API_URI+"/1/genotype/?locations="+config["genotype_scopes"], access_token)
 		err = json.Unmarshal(data, &genotypes)
 		if err != nil {
 			log.Printf(err.Error())
