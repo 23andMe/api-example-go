@@ -33,9 +33,6 @@
     <!-- Included JS Files (Compressed) -->
     <script src="/static/javascripts/jquery.js"></script>
     <script src="/static/javascripts/foundation.min.js"></script>
-
-    <!-- Initialize JS Plugins -->
-    <script src="/static/javascripts/app.js"></script>
 </body>
 </html>
 {{ end }}
