@@ -180,7 +180,7 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		context := map[string]string{
 			"path":         req.URL.Path,
 			"client_id":    config["CLIENT_ID"],
-			"scope":        config["SCOPE"],
+			"scope":        config["scope"],
 			"redirect_uri": config["REDIRECT_URI"],
 		}
 		_ = templates.ExecuteTemplate(w, "index", context)
