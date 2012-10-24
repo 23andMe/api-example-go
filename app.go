@@ -39,12 +39,40 @@ type Genome struct {
 	Id        string `json:"id"`
 }
 
-func computeBoneStrength(g Genome) (strength int) {
-    cortical_thickness_weakness := strings.Count(g.Rs9525638, "T") + strings.Count(g.Rs2707466, "C")
-    forearm_bone_mineral_density_weakness := strings.Count(g.Rs2908004, "G") + strings.Count(g.Rs2707466, "C")
-    forearm_fracture_risk := strings.Count(g.Rs7776725, "C") + strings.Count(g.Rs2908004, "G") + strings.Count(g.Rs2707466, "C")
-    strength = 14 - cortical_thickness_weakness - forearm_bone_mineral_density_weakness - forearm_fracture_risk
-    return
+const MaximumBoneStrength = 14
+
+type BoneStrength struct {
+	Score               int
+	CorticalStrength    int
+	ForearmBMD  int
+	LowerForearmRisk int
+	Description         string
+}
+
+type BoneStrengthProfile struct {
+	Name         Name
+	BoneStrength BoneStrength
+}
+
+func descriptionForStrength(strength int) string {
+	switch {
+	case strength < 5:
+		return "weak"
+	case strength < 8:
+		return "average"
+	case strength < 11:
+		return "strong"
+	}
+	return "superhuman"
+}
+
+func computeBoneStrength(g Genome) (strength BoneStrength) {
+	strength.CorticalStrength = 4 - strings.Count(g.Rs9525638, "T") - strings.Count(g.Rs2707466, "C")
+	strength.ForearmBMD = 4 - strings.Count(g.Rs2908004, "G") - strings.Count(g.Rs2707466, "C")
+	strength.LowerForearmRisk = 6 - strings.Count(g.Rs7776725, "C") - strings.Count(g.Rs2908004, "G") - strings.Count(g.Rs2707466, "C")
+	strength.Score = strength.CorticalStrength + strength.ForearmBMD + strength.LowerForearmRisk
+	strength.Description = descriptionForStrength(strength.Score)
+	return
 }
 
 func buildConfig() (configs map[string]string) {
@@ -85,9 +113,10 @@ func JSONResponse(http_method string, url string, access_token string) (data []b
 	return
 }
 
-func namesByProfile(names NamesResponse) (names_by_profile map[string]string) {
+func namesByProfile(names NamesResponse) (names_by_profile map[string]Name) {
+	names_by_profile = make(map[string]Name)
 	for _, name := range names.Profiles {
-		names_by_profile[name.Id] = fmt.Sprintf("%s %s", name.FirstName, name.LastName)
+		names_by_profile[name.Id] = name
 	}
 	return
 }
@@ -96,7 +125,7 @@ func main() {
 	config := buildConfig()
 	store := sessions.NewCookieStore([]byte(config["cookie_secret"]))
 
-	templates := template.Must(template.ParseFiles("templates/index.dtml", "templates/result.dtml"))
+	templates := template.Must(template.ParseFiles("templates/_base.dtml", "templates/index.dtml", "templates/result.dtml"))
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config["static_path"]))))
 	http.HandleFunc("/receive_code/", func(w http.ResponseWriter, req *http.Request) {
@@ -134,7 +163,6 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 			} else {
 				session.Values[config["session_access_token_key"]] = t_res.AccessToken
 				session.Save(req, w)
-				log.Printf("token is %s", t_res.AccessToken)
 				http.Redirect(w, req, "/", 303)
 			}
 		}
@@ -153,7 +181,7 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 			"scope":        config["scope"],
 			"redirect_uri": config["redirect_uri"],
 		}
-		_ = templates.ExecuteTemplate(w, "index.dtml", context)
+		_ = templates.ExecuteTemplate(w, "index", context)
 	} else {
 		access_token, _ := token.(string)
 		api_uri := config["api_uri"]
@@ -172,7 +200,16 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		if err != nil {
 			log.Printf(err.Error())
 		}
-		/*names_by_profile := namesByProfile(names)*/
-		_ = templates.ExecuteTemplate(w, "result.dtml", nil)
+		names_by_profile := namesByProfile(names)
+		var boneStrengthProfiles []BoneStrengthProfile
+		for _, genotype := range genotypes {
+			boneStrength := computeBoneStrength(genotype)
+			boneStrengthProfile := BoneStrengthProfile{
+				BoneStrength: boneStrength,
+				Name:         names_by_profile[genotype.Id],
+			}
+			boneStrengthProfiles = append(boneStrengthProfiles, boneStrengthProfile)
+		}
+		_ = templates.ExecuteTemplate(w, "result", boneStrengthProfiles)
 	}
 }
