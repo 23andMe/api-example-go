@@ -9,10 +9,11 @@ Your env's ```REDIRECT_URI``` must match the one on your developer dashboard at 
 
 Heroku
 ===
-I host the app on Heroku. First setup Go on heroku, see http://mmcgrana.github.com/2012/09/getting-started-with-go-on-heroku.html.
-To change the environment variables on heroku, see https://devcenter.heroku.com/articles/config-vars. 
+I host the app on Heroku. 
+- Setup Go on Heroku: http://mmcgrana.github.com/2012/09/getting-started-with-go-on-heroku.html.
+- Set environment variables on Heroku: https://devcenter.heroku.com/articles/config-vars. 
 
-On Heroku, I've changed CLIENT_ID, CLIENT_SECRET to be the ones from my developer dashboard, and deleted the PORT variable because Heroku sets it automatically.
+I change ```CLIENT_ID``` and ```CLIENT_SECRET``` to match my API credentials, and delete the ```PORT``` variable because Heroku sets it automatically.
 
 ```
 heroku config:set CLIENT_ID=xxx
