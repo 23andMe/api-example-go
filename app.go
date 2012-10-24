@@ -88,8 +88,8 @@ func buildConfig() (configs map[string]string) {
 	configs["genotype_scopes"] = strings.Join(genotype_scopes, "%20")
 	configs["scope"] = strings.Join(scopes, " ")
 	// Your API credentials and server info
-	config_keys := []string{"client_id", "client_secret", "redirect_uri",
-		"cookie_secret", "static_path", "session_name", "session_access_token_key", "port"}
+	config_keys := []string{"CLIENT_ID", "CLIENT_SECRET", "REDIRECT_URI",
+		"COOKIE_SECRET", "STATIC_PATH", "SESSION_NAME", "SESSION_ACCESS_TOKEN_KEY", "PORT"}
 
 	var environment_result string
 	for _, value := range config_keys {
@@ -125,34 +125,34 @@ func namesByProfile(names NamesResponse) (names_by_profile map[string]Name) {
 
 func main() {
 	config := buildConfig()
-	store := sessions.NewCookieStore([]byte(config["cookie_secret"]))
+	store := sessions.NewCookieStore([]byte(config["COOKIE_SECRET"]))
 
 	templates := template.Must(template.ParseFiles("templates/_base.dtml", "templates/index.dtml", "templates/result.dtml"))
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config["static_path"]))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config["STATIC_PATH"]))))
 	http.HandleFunc("/receive_code/", func(w http.ResponseWriter, req *http.Request) {
 		receiveCode(w, req, config, store, templates)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		index(w, req, config, store, templates)
 	})
-	err := http.ListenAndServe(":"+config["port"], nil)
+	err := http.ListenAndServe(":"+config["PORT"], nil)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
 
 func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]string, store *sessions.CookieStore, templates *template.Template) {
-	session, _ := store.Get(req, config["session_name"])
+	session, _ := store.Get(req, config["SESSION_NAME"])
 	context, _ := url.ParseQuery(req.URL.RawQuery)
 	if code, ok := context["code"]; ok {
 		auth_code := string(code[0])
 		resp, _ := http.PostForm(API_URI+"/token/",
-			url.Values{"client_id": {config["client_id"]},
-				"client_secret": {config["client_secret"]},
+			url.Values{"client_id": {config["CLIENT_ID"]},
+				"client_secret": {config["CLIENT_SECRET"]},
 				"grant_type":    {"authorization_code"},
 				"code":          {auth_code},
-				"redirect_uri":  {config["redirect_uri"]},
+				"redirect_uri":  {config["REDIRECT_URI"]},
 				"scope":         {config["scope"]},
 			})
 		defer resp.Body.Close()
@@ -163,7 +163,7 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 			if err != nil {
 				log.Printf(err.Error())
 			} else {
-				session.Values[config["session_access_token_key"]] = t_res.AccessToken
+				session.Values[config["SESSION_ACCESS_TOKEN_KEY"]] = t_res.AccessToken
 				session.Save(req, w)
 				http.Redirect(w, req, "/", 303)
 			}
@@ -174,14 +174,14 @@ func receiveCode(w http.ResponseWriter, req *http.Request, config map[string]str
 }
 
 func index(w http.ResponseWriter, req *http.Request, config map[string]string, store *sessions.CookieStore, templates *template.Template) {
-	session, _ := store.Get(req, config["session_name"])
-	token, ok := session.Values[config["session_access_token_key"]]
+	session, _ := store.Get(req, config["SESSION_NAME"])
+	token, ok := session.Values[config["SESSION_ACCESS_TOKEN_KEY"]]
 	if !ok {
 		context := map[string]string{
 			"path":         req.URL.Path,
-			"client_id":    config["client_id"],
-			"scope":        config["scope"],
-			"redirect_uri": config["redirect_uri"],
+			"client_id":    config["CLIENT_ID"],
+			"scope":        config["SCOPE"],
+			"redirect_uri": config["REDIRECT_URI"],
 		}
 		_ = templates.ExecuteTemplate(w, "index", context)
 	} else {
@@ -189,7 +189,7 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		data, status := JSONResponse("GET", API_URI+"/1/names/", access_token)
 		if status != 200 {
 			// Probably, the auth code expired. Go back home and re-authenticate.
-			delete(session.Values, config["session_access_token_key"])
+			delete(session.Values, config["SESSION_ACCESS_TOKEN_KEY"])
 			session.Save(req, w)
 			http.Redirect(w, req, "/", 303)
 		}
