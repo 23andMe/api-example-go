@@ -15,10 +15,10 @@
   <title>Am I Unbreakable?</title>
   <link href='http://fonts.googleapis.com/css?family=Rock+Salt' rel='stylesheet' type='text/css'>
   <!-- Included CSS Files (Compressed) -->
-  <link rel="stylesheet" href="/static/stylesheets/foundation.min.css">
+  <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/3.1.1/stylesheets/foundation.min.css">
   <link rel="stylesheet" href="/static/stylesheets/app.css">
 
-  <script src="/static/javascripts/modernizr.foundation.js"></script>
+  <script src="http://cdn.jsdelivr.net/foundation/3.1.1/javascripts/modernizr.foundation.js"></script>
 
   <!-- IE Fix for HTML5 Tags -->
   <!--[if lt IE 9]>
@@ -31,8 +31,8 @@
 
 {{ define "_footer" }}
     <!-- Included JS Files (Compressed) -->
-    <script src="/static/javascripts/jquery.js"></script>
-    <script src="/static/javascripts/foundation.min.js"></script>
+    <script src="http://cdn.jsdelivr.net/foundation/3.1.1/javascripts/jquery.js"></script>
+    <script src="http://cdn.jsdelivr.net/foundation/3.1.1/javascripts/foundation.min.js"></script>
 </body>
 </html>
 {{ end }}
