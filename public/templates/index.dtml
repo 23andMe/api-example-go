@@ -12,7 +12,7 @@
         <h1>Am I unbreakable?</h1>
         <h3><a href="https://api.23andme.com/authorize?redirect_uri={{.redirect_uri}}&response_type=code&client_id={{.client_id}}&scope={{.scope}}" class="button large secondary"><img src="/static/images/23andMe-logo.png" height="30" width="30" class="connect" />Connect with 23andMe</a></h3>
         <p>A recent <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">PLOS Genetics</a> paper found genes for bone mineral density, cortical bone thickness, bone strength, and osteoporotic fracture risk.</p>
-        <p>Maybe you're built like Superman, and maybe you're Mr. Glass. There's only one way to find out (without running into a brick wall).<br /> <a href="https://23andme.com">Not genotyped?</a></p>
+        <p>Maybe you're built like Superman, and maybe you're Mr. Glass. There's only one way to find out (without running into a brick wall).<br /> <a href="https://www.23andme.com">Not genotyped?</a></p>
     </div>
 </div>
 {{ template "_footer" }}
