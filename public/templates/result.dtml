@@ -8,7 +8,7 @@
     <div class="twelve columns">
         <div class="row">
             <div class="twelve columns centered genetics">
-                All results from SNPs rs9525638, rs2908004, rs2707466, and rs7776725 on genes <i>WNT16</i> and <i>FAM3C</i>. Check out <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">the PLoS paper</a>.
+                Results from SNPs rs9525638, rs2908004, rs2707466, and rs7776725 on genes <i>WNT16</i> and <i>FAM3C</i>. "Higher/Lower" compares to those with mutations. Check out <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">the PLoS paper</a>.
             </div>
         </div>
             {{ range . }}
@@ -30,15 +30,15 @@
                     <br />
                     <table>
                         <tr>
-                            <td>Cortical Strength</td>
+                            <td>Higher Cortical Bone Strength</td>
                             <td><span class="num">{{.BoneStrength.CorticalStrength}}</span><span class="denom">/4</span></td>
                         </tr>
                         <tr>
-                            <td>Forearm Bone Mineral Density</td>
+                            <td>Higher Forearm Bone Mineral Density</td>
                             <td><span class="num">{{.BoneStrength.ForearmBMD}}</span><span class="denom">/4</span></td>
                         </tr>
                         <tr>
-                            <td>Decreased Forearm Fracture Risk</td>
+                            <td>Lower Forearm Fracture Risk</td>
                             <td><span class="num">{{.BoneStrength.LowerForearmRisk}}</span><span class="denom">/6</span></td>
                         </tr>
                     </table>
