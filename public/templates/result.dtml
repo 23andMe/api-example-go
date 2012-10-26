@@ -11,9 +11,8 @@
                 All results from SNPs rs9525638, rs2908004, rs2707466, and rs7776725 on genes <i>WNT16</i> and <i>FAM3C</i>. Check out <a href="http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1002745">the PLoS paper</a>.
             </div>
         </div>
-        <div class="row">
             {{ range . }}
-            <div class="four columns">
+            <div class="four columns end">
                 <span class="title">
                     <span class="name">{{ .Name.FirstName }} {{ .Name.LastName }}</span>
                 </span>
@@ -46,7 +45,6 @@
                 </div>
             </div>
             {{ end }}
-        </div>
     </div>
 </div>
 {{ template "_footer" }}
