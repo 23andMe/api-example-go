@@ -39,11 +39,6 @@ type Genome struct {
 	Id        string `json:"id"`
 }
 
-const (
-	MAXIMUM_BONE_STRENGTH = 14
-	API_URI               = "https://api.23andme.com"
-)
-
 type BoneStrength struct {
 	Score            int
 	CorticalStrength int
@@ -54,8 +49,13 @@ type BoneStrength struct {
 
 type BoneStrengthProfile struct {
 	Name         Name
-	BoneStrength BoneStrength
+	BoneStrength *BoneStrength
 }
+
+const (
+	MAXIMUM_BONE_STRENGTH = 14
+	API_URI               = "https://api.23andme.com"
+)
 
 func descriptionForStrength(strength int) string {
 	switch {
@@ -69,7 +69,8 @@ func descriptionForStrength(strength int) string {
 	return "superhuman"
 }
 
-func computeBoneStrength(g Genome) (strength BoneStrength) {
+func computeBoneStrength(g *Genome) (strength *BoneStrength) {
+	strength = new(BoneStrength)
 	strength.CorticalStrength = 4 - strings.Count(g.Rs9525638, "T") - strings.Count(g.Rs2707466, "C")
 	strength.ForearmBMD = 4 - strings.Count(g.Rs2908004, "G") - strings.Count(g.Rs2707466, "C")
 	strength.LowerForearmRisk = 6 - strings.Count(g.Rs7776725, "C") - strings.Count(g.Rs2908004, "G") - strings.Count(g.Rs2707466, "C")
@@ -115,7 +116,7 @@ func JSONResponse(http_method string, url string, access_token string) (data []b
 	return
 }
 
-func namesByProfile(names NamesResponse) (names_by_profile map[string]Name) {
+func namesByProfile(names *NamesResponse) (names_by_profile map[string]Name) {
 	names_by_profile = make(map[string]Name)
 	for _, name := range names.Profiles {
 		names_by_profile[name.Id] = name
@@ -203,10 +204,10 @@ func index(w http.ResponseWriter, req *http.Request, config map[string]string, s
 		if err != nil {
 			log.Printf(err.Error())
 		}
-		names_by_profile := namesByProfile(names)
+		names_by_profile := namesByProfile(&names)
 		var boneStrengthProfiles []BoneStrengthProfile
 		for _, genotype := range genotypes {
-			boneStrength := computeBoneStrength(genotype)
+			boneStrength := computeBoneStrength(&genotype)
 			boneStrengthProfile := BoneStrengthProfile{
 				BoneStrength: boneStrength,
 				Name:         names_by_profile[genotype.Id],
