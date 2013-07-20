@@ -30,6 +30,7 @@ div#main {
     font-family: 'Rock Salt', cursive;
     font-size: 32px;
     color: #ddd;
+    line-height: 1.5em;
 }
 .description .mine {
     text-transform: capitalize;
