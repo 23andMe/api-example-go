@@ -18,6 +18,10 @@ I change ```CLIENT_ID``` and ```CLIENT_SECRET``` to match my API credentials, an
 ```
 heroku config:set CLIENT_ID=xxx
 heroku config:set CLIENT_SECRET=xxx
+heroku config:set COOKIE_SECRET=xxx
+heroku config:set SESSION_NAME=api-example-bones
+heroku config:set SESSION_ACCESS_TOKEN_KEY=xxx
+heroku config:set REDIRECT_URI=http://yourapp.com/receive_code/
 heroku config:unset PORT
 ```
 
