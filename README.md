@@ -1,8 +1,7 @@
 api-example-bones
 =================
 
-An example API app in Go that checks a user's WNT16 and FAM3C genes for unbreakable bones. Try it: http://bones.herokuapp.com.
-
+An example API app in Go that checks a user's WNT16 and FAM3C genes for unbreakable bones.
 Clone the repository, and look at the ```.env``` file to see what environment variables must be set.
 
 Your env's ```REDIRECT_URI``` must match the one on your developer dashboard at https://api.23andme.com/dashboard/. Locally you'll probably want ```http://localhost:PORT/receive_code/```.
